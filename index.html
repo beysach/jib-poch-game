@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ល្បែងជីបប៉ុច Created By Beysach</title>
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanuman:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Hanuman", serif;
+      background-image: url('http://127.0.0.1:5500/bg.png'); /* Replace with your image URL */
+      background-size: auto;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+    
+  .grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* Default to 2 columns */
+  }
+
+  
+  </style>
+</head>
+<body>
+  <div id="gameContent" class="flex h-screen w-screen items-center justify-center bg-gray-100 bg-opacity-50">
+    <div class="flex flex-col items-center justify-center space-y-4 bg-white bg-opacity-80 p-4 rounded-lg shadow-lg">
+      <div id="scoreDisplay" class="text-lg font-bold">ពិន្ទុ: 0</div>
+      <div id="lyricsDisplay" class="text-4xl">ល្បែងជីបប៉ុច</div>
+      <div id="timerDisplay" class="text-lg font-bold">ម៉ោង: 0s</div>
+      <div class="grid grid-cols-2 sm:grid-cols-1 gap-4">
+        <button id="jibButton" class="rounded-full border border-black px-8 py-4 text-base sm:text-lg">ជីប</button>
+        <button id="pochButton" class="rounded-full border border-black px-8 py-4 text-base sm:text-lg">ប៉ុច</button>
+        <button id="elaButton" class="rounded-full border border-black px-8 py-4 text-base sm:text-lg">អេឡាប៉ុច</button>
+        <button id="belaButton" class="rounded-full border border-black px-8 py-4 text-base sm:text-lg">ជីប ជីប</button>
+        <button id="kalaButton" class="w-full rounded-full border border-black px-8 py-4 text-base sm:text-lg">កាឡាប៉ុច</button>
+      </div>
+      <button id="startButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">ចាប់ផ្តើមហ្គេម</button>
+      <button id="restartButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded hidden">ម្តងទៀត</button>
+    </div>
+  </div>
+  
+
+  <audio id="backgroundMusic" src="background.mp3" loop></audio>
+
+  <script>
+   let timer;
+let score = 0;
+let currentLyricIndex = 0;
+const lyrics = [
+  { text: "ប៉ុច", start: 0.000000, end: 0.612400 },
+  { text: "ជីប ជីប", start: 0.612400, end: 1.612400 },
+  { text: "ប៉ុច", start: 1.640658, end: 2.026947 },
+  { text: "ជីប", start: 2.017528, end: 2.674450 },
+  { text: "ប៉ុច", start: 2.695873, end: 3.189841 },
+  { text: "អេឡាប៉ុច", start: 3.214059, end: 4.371880 },
+  { text: "ជីប", start: 4.401179, end: 4.901276 },
+  { text: "ប៉ុច", start: 4.928776, end: 5.545515 },
+  { text: "ជីប ជីប", start: 5.569456, end: 6.184724 },
+  { text: "ប៉ុច", start: 6.200687, end: 6.646895 },
+  { text: "ជីប", start: 6.671769, end: 7.279930 },
+  { text: "ប៉ុច", start: 7.293583, end: 7.907363 },
+  { text: "កាឡាប៉ុច", start: 7.924830, end: 8.977360 },
+  { text: "ជីប", start: 8.998889, end: 9.545971 },
+  { text: "ប៉ុច", start: 9.564172, end: 10.114582 },
+  { text: "ជីប ជីប", start: 10.138889, end: 10.725208 },
+  { text: "ប៉ុច", start: 10.741859, end: 11.209788 },
+  { text: "ជីប", start: 11.231791, end: 11.750388 },
+  { text: "ប៉ុច", start: 11.768821, end: 12.403031 }
+];
+let expectedEndTime = lyrics[currentLyricIndex].end;
+
+const backgroundMusic = document.getElementById("backgroundMusic");
+
+function startGame() {
+  // Reset variables
+  score = 0;
+  currentLyricIndex = 0;
+  expectedEndTime = lyrics[currentLyricIndex].end;
+  document.getElementById("scoreDisplay").innerText = `ពិន្ទុ: ${score}`;
+  document.getElementById("lyricsDisplay").innerText = lyrics[currentLyricIndex].text;
+  document.getElementById("startButton").classList.add("hidden");
+  document.getElementById("restartButton").classList.add("hidden");
+  document.querySelectorAll(".grid button").forEach(btn => btn.disabled = false);
+
+  // Start the timer
+  backgroundMusic.play(); // Start playing the music
+  let lastTime = performance.now();
+  let currentTime = 0;
+
+  function updateTimer() {
+    const currentTimeNow = performance.now();
+    const deltaTime = currentTimeNow - lastTime;
+    lastTime = currentTimeNow;
+    currentTime += deltaTime / 1000;
+    document.getElementById("timerDisplay").innerText = `ម៉ោង: ${currentTime.toFixed(2)} វិនាទី`;
+
+    // Check if lyrics should change
+    if (currentTime >= expectedEndTime) {
+      currentLyricIndex++;
+      if (currentLyricIndex < lyrics.length) {
+        document.getElementById("lyricsDisplay").innerText = lyrics[currentLyricIndex].text;
+        expectedEndTime = lyrics[currentLyricIndex].end;
+      } else {
+        clearInterval(timer);
+        document.getElementById("lyricsDisplay").innerText = "ហ្គេមត្រូវបានបញ្ចប់";
+        document.querySelectorAll(".grid button").forEach(btn => btn.disabled = true);
+        document.getElementById("restartButton").classList.remove("hidden");
+        backgroundMusic.pause(); // Pause the music
+        return;
+      }
+    }
+
+    // Check if game over
+    if (score < 0) {
+      clearInterval(timer);
+      document.getElementById("lyricsDisplay").innerText = "ហ្គេមត្រូវបានបញ្ចប់";
+      document.querySelectorAll(".grid button").forEach(btn => btn.disabled = true);
+      document.getElementById("restartButton").classList.remove("hidden");
+      backgroundMusic.pause(); // Pause the music
+      return;
+    }
+
+    requestAnimationFrame(updateTimer);
+  }
+
+  updateTimer();
+
+}
+
+document.getElementById("startButton").addEventListener("click", startGame);
+
+document.getElementById("restartButton").addEventListener("click", () => {
+  clearInterval(timer);
+  startGame();
+});
+
+// Handle user interaction
+document.querySelectorAll(".grid button").forEach(button => {
+  button.addEventListener("click", () => {
+    const clickedText = button.innerText;
+    if (clickedText === lyrics[currentLyricIndex].text) {
+      score++;
+    } else {
+      score--;
+    }
+    document.getElementById("scoreDisplay").innerText = `ពិន្ទុ: ${score}`;
+  });
+});
+
+  </script>
+</body>
+</html>
