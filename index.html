@@ -24,6 +24,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)); /* Default to 2 columns */
   }
 
+  .button-clicked {
+    transition: background-color 0.3s ease-in-out;
+  }
   
   </style>
 </head>
@@ -86,7 +89,13 @@ function startGame() {
   document.getElementById("lyricsDisplay").innerText = lyrics[currentLyricIndex].text;
   document.getElementById("startButton").classList.add("hidden");
   document.getElementById("restartButton").classList.add("hidden");
-  document.querySelectorAll(".grid button").forEach(btn => btn.disabled = false);
+  document.querySelectorAll(".grid button").forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove("button-clicked");
+  });
+
+  // Highlight the correct button
+  highlightCorrectButton();
 
   // Start the timer
   backgroundMusic.play(); // Start playing the music
@@ -102,28 +111,19 @@ function startGame() {
 
     // Check if lyrics should change
     if (currentTime >= expectedEndTime) {
+    
       currentLyricIndex++;
       if (currentLyricIndex < lyrics.length) {
         document.getElementById("lyricsDisplay").innerText = lyrics[currentLyricIndex].text;
         expectedEndTime = lyrics[currentLyricIndex].end;
+        highlightCorrectButton(); // Highlight the correct button for the new lyric
       } else {
         clearInterval(timer);
         document.getElementById("lyricsDisplay").innerText = "ហ្គេមត្រូវបានបញ្ចប់";
-        document.querySelectorAll(".grid button").forEach(btn => btn.disabled = true);
         document.getElementById("restartButton").classList.remove("hidden");
         backgroundMusic.pause(); // Pause the music
         return;
       }
-    }
-
-    // Check if game over
-    if (score < 0) {
-      clearInterval(timer);
-      document.getElementById("lyricsDisplay").innerText = "ហ្គេមត្រូវបានបញ្ចប់";
-      document.querySelectorAll(".grid button").forEach(btn => btn.disabled = true);
-      document.getElementById("restartButton").classList.remove("hidden");
-      backgroundMusic.pause(); // Pause the music
-      return;
     }
 
     requestAnimationFrame(updateTimer);
@@ -146,12 +146,26 @@ document.querySelectorAll(".grid button").forEach(button => {
     const clickedText = button.innerText;
     if (clickedText === lyrics[currentLyricIndex].text) {
       score++;
+      button.classList.add("button-clicked");
+      button.style.borderColor = "green"; // Correct answer turns green
     } else {
-      score--;
+      button.style.borderColor = "red"; // Wrong answer turns red
     }
     document.getElementById("scoreDisplay").innerText = `ពិន្ទុ: ${score}`;
   });
 });
+
+// Function to highlight the correct button based on the current lyric
+function highlightCorrectButton() {
+  const currentLyric = lyrics[currentLyricIndex].text;
+  document.querySelectorAll(".grid button").forEach(btn => {
+    if (btn.innerText === currentLyric) {
+      btn.style.borderColor = "green";
+    } else {
+      btn.style.borderColor = "black";
+    }
+  });
+}
 
   </script>
 </body>
